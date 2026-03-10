@@ -30,5 +30,3 @@ Stage 5 — HTTP Protocol
 
 ### Security
 - path traversal attacks, request size limits, rate limiting, header validation
-
-### TLS/HTTPS
