@@ -4,71 +4,48 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 
-void http_server()
+int main()
 {
-    int server_fd, new_socket;
-    struct sockaddr_in socket_address;
-    int addr_len = sizeof(socket_address);
+    // main listening socket
+    int server_fd = socket(AF_INET, SOCK_STREAM, 0);
 
-    char *response = "HTTP/1.1 200 OK\nContent-Type: text/html\nContent-Length: 20\n\n<h1>Hello World</h1>";
+    // socket address structure specifically for IPv4
+    struct sockaddr_in sock_addr;
+    sock_addr.sin_family = AF_INET;         // use IPv4 Address
+    sock_addr.sin_addr.s_addr = INADDR_ANY; // uisten on all available newtwork interfaces
+    sock_addr.sin_port = htons(8080);       // specify port number in correct order using htons()
+    int addr_len = sizeof(sock_addr);
 
-    server_fd = socket(AF_INET, SOCK_STREAM, 0);
+    // bind socket fd & address structure
+    bind(server_fd, (struct sockaddr *)&sock_addr, sizeof(sock_addr));
 
-    socket_address.sin_family = AF_INET;
-    socket_address.sin_addr.s_addr = INADDR_ANY;
-    socket_address.sin_port = htons(8080);
+    // set up socket for listening to connections & max pending conn queue length to 10
+    listen(server_fd, 10);
 
-    bind(server_fd, (struct sockaddr *)&socket_address, sizeof(socket_address));
-
-    listen(server_fd, 3);
-    
+    // logging
     printf("Server listening on port 8080...\n");
 
     while (1)
     {
-        new_socket = accept(server_fd, (struct sockaddr *)&socket_address, (socklen_t *)&addr_len);
+        // blocking call. returns fd for new client conn socket
+        int client_fd = accept(server_fd, (struct sockaddr *)&sock_addr, (socklen_t *)&addr_len);
+
+        // store request in buffer
         char buffer[1024] = {0};
-        read(new_socket, buffer, 1024);
-        printf("Request received:\n%s\n", buffer);
+        read(client_fd, buffer, 1024);
 
-        write(new_socket, response, strlen(response));
+        // logging
+        printf("Request Received: %s\n", buffer);
 
-        close(new_socket);
+        // response in http format
+        char *response = "HTTP/1.1 200 OK\nContent-Type: text/html\nContent-Length: 20\n\n<h1>Hello World</h1>";
+
+        // push the response back to client through the socket
+        write(client_fd, response, strlen(response));
+
+        // close connection for current client
+        close(client_fd);
     }
-}
 
-void tcp_echo_server() {
-    int server_fd = socket(AF_INET, SOCK_STREAM, 0);
-
-    struct sockaddr_in sock_addr;
-    sock_addr.sin_family = AF_INET;
-    sock_addr.sin_addr.s_addr = INADDR_ANY;
-    sock_addr.sin_port = htons(8080);
-
-    bind(server_fd, (struct sockaddr *)&sock_addr, sizeof(sock_addr));
-    
-    listen(server_fd, 5);
-
-    // printf("Socket fd: %d\n", server_fd);
-    printf("TCP Echo Server running on port 8080...\n");
-
-    while(1) {
-        int client = accept(server_fd, 0, 0);
-        char buffer[1024] = {0};
-
-        read(client, buffer, 1024);
-
-        // printf("Client fd: %d\n", client);
-        printf("Received: %s\n", buffer);
-
-        send(client, buffer, 1024, 0);
-
-        close(client);
-    }
-}
-
-int main()
-{
-    tcp_echo_server();
     return 0;
 }

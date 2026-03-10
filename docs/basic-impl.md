@@ -10,65 +10,87 @@ Socket: A file that represents a network connection. To get a server running, a 
 - read() / write(): Exchange data (the HTTP request and response)
 - close(): Close the connection
 
-## Basic TCP Echo Server
+
 ```bash
-void tcp_echo_server() {
-    int server_fd = socket(AF_INET, SOCK_STREAM, 0);
+void http_server()
+{
+    int server_fd, new_socket;
+    struct sockaddr_in socket_address;
+    int addr_len = sizeof(socket_address);
 
-    struct sockaddr_in sock_addr;
-    sock_addr.sin_family = AF_INET;
-    sock_addr.sin_addr.s_addr = INADDR_ANY;
-    sock_addr.sin_port = htons(8080);
+    char *response = "HTTP/1.1 200 OK\nContent-Type: text/html\nContent-Length: 20\n\n<h1>Hello World</h1>";
 
-    bind(server_fd, (struct sockaddr *)&sock_addr, sizeof(sock_addr));
-    listen(server_fd, 5);
+    server_fd = socket(AF_INET, SOCK_STREAM, 0);
+    // Returns the file descriptor to the socket or -1 for failure
+    // Domain = AF_INET - Address Family: IPv4
+    // Type = SOCK_STREAM - Socket Type: Stream
+    // Protocol = 0 - Default Protocol- IPPROTO_TCP
 
-    printf("TCP Echo Server running on port 8080...\n");
+    socket_address.sin_family = AF_INET;
+    socket_address.sin_addr.s_addr = INADDR_ANY;
+    socket_address.sin_port = htons(8080);
 
-    while(1) {
-        int client = accept(server_fd, 0, 0);
+    bind(server_fd, (struct sockaddr *)&socket_address, sizeof(socket_address));
+
+    listen(server_fd, 3);
+    
+    printf("Server listening on port 8080...\n");
+
+    while (1)
+    {
+        new_socket = accept(server_fd, (struct sockaddr *)&socket_address, (socklen_t *)&addr_len);
         char buffer[1024] = {0};
+        read(new_socket, buffer, 1024);
+        printf("Request received:\n%s\n", buffer);
 
-        read(client, buffer, 1024);
-        printf("Received: %s\n", buffer);
+        write(new_socket, response, strlen(response));
 
-        send(client, buffer, 1024, 0);
-
-        close(client);
+        close(new_socket);
     }
 }
 ```
-### Socket creation:
-- int socket_fd = socket(AF_INET, SOCK_STREAM, 0);
 
-- AF_INET : "Address Family: IPv4". Tells the kernel we want to use standard IP addresses like 127.0.0.1
+## Initialization
+- int server_fd, new_socket;
+- struct sockaddr_in socket_address;
 
-- SOCK_STREAM: Tells the kernel we want TCP- a connection-oriented protocol. It requires a connection established before talking and guarantees that data arrives in the correct order without corruption
+- server_fd: The Listening Socket. It's only job is to stay at port 8080 and wait for new connections
 
-- Return Value: socket() returns an integer- a File Descriptor for the socket
+- new_socket(): The Connection Socket. Every time a new client connects, the server creates a new socket for that connection
 
-### Address Structure:
-- struct sockaddr_in addr = {AF_INET, htons(8080), {INADDR_ANY}};
+- sockaddr_in: The struct that holds the IP address and Port Number
 
-- htons(8080): Host To Network Short - ensures the number 8080 is flipped correctly so the router understands it
+## Building the socket
+- server_fd = socket(AF_INET, SOCK_STREAM, 0);
+- socket_address.sin_family = AF_INET;
+- socket_address.sin_addr.s_addr = INADDR_ANY;
+- socker_address.sin_port = htons(8080);
 
-- INDRR_ANY: Constat that tells the server to bind to all available IP addresses on the machine (Localhost, WiFi, Ethernet)
+- socket(): Creates a new socket and returns its file descriptor
 
-### Binding and Listening:
-- bind(server_fd, (struct sockaddr *)&sock_addr, sizeof(sock_addr));
-- listen(server_fd, 5);
+- htons(8080): Formats the number 8080 so the network understands it
 
-- bind(): Attaches the program to the specific port (8080). Fails if another program is already using this port
+## Binding & Listening
+- bind(server_fd, (struct sockaddr *)&socket_address, sizeof(socket_address));
+- listen(server_fd, 3);
 
-- listen(): Tells the kernel to start queueing up incoming connections. The number 5 is the "backlog"- it's the maximum number of people who can be "on hold" before the server starts rejecting them
+- bind(): Attaches the program to the port 8080
 
-### The Infinite Loop:
-- while(1) {}
+- listen(): Tells the kernel to start a queue with a maximum size of 3. 4th person trying to connect will be refused until the previous connections are closed
 
-- int client = accept(server_fd, 0, 0);
-- accept(): This is a blocking call. The program will pause here and do nothing until someone tries to connect to port 8080. When they do, accept returns a new file descriptor (client) specifically for that person
+## Infinite Service Loop
+- new_socket = accept(server_fd, (struct sockaddr*)&socket_address, (socketlen_t *)&addr_len);
+- Program stops and waits here. It consumes 0% CPU while waiting. When a browser hits localhost:8080, accept wakes up and gives the client the new_socket
 
-- read(client, buffer, 1024): This pulls bytes out of the network pipe and puts them into the buffer(a simple array of characters)
+- char buffer[1024] = {0};
+- read(new_socket, buffer, 1024);
+- The buffer fills up the HTTP Request
 
-- send(client, buffer, 1024), 0): This pushes those same bytes back through the pipe to the client
+- write(new_socket, response, strlen(response));
+- Send the response in HTTP format
 
+- close(new_socket);
+- hanging up the connection
+
+
+* Double Newline "\n\n" in the response separates the header from the actual content
