@@ -12,8 +12,7 @@ typedef struct {
 } http_request;
 
 int parse_http_request(char* buffer, http_request* request);
-
-int handle_get_index();
+int handle_get_index(int client_fd);
 
 int main()
 {
@@ -69,6 +68,7 @@ int main()
         if(parse_http_request(buffer, &req) != 3) // parse http request and store in req
         {
             perror("Request Parsing Failed");
+            close(client_fd);
             continue;
         }
         // printf("Method: %s, Path: %s, Version: %s\n", req.method, req.path, req.version);
@@ -77,6 +77,7 @@ int main()
         if (strstr(req.path, "..") != NULL)
         {
             perror("Invalid Request");
+            close(client_fd);
             continue;
         }
 
@@ -84,9 +85,11 @@ int main()
         if(strcmp(req.path, "/") == 0)
         {
             handle_get_index(client_fd);
-            close(client_fd);
+            close(client_fd); // close connection for current client
+            continue;
         }
 
+        /*
         // response in http format
         char *response = "HTTP/1.1 200 OK\nContent-Type: text/html\nContent-Length: 20\n\n<h1>Hello World</h1>";
 
@@ -95,6 +98,7 @@ int main()
 
         // close connection for current client
         close(client_fd);
+        */
     }
 
     return 0;
@@ -116,6 +120,7 @@ int handle_get_index(int client_fd)
     FILE* file = fopen("static/index.html", "rb");
     if(file == NULL) {
         perror("File Open Failed");
+        return -1;
     }
 
     fseek(file, 0, SEEK_END);
