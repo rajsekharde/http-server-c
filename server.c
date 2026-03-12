@@ -84,11 +84,20 @@ int main()
             continue;
         }
 
-        // handle GET "/"
+        // handle GET /
         if(strcmp(req.path, "/") == 0)
         {
             handle_get_index(client_fd);
             close(client_fd); // close connection for current client
+            metrics.active_connections -= 1;
+            continue;
+        }
+
+        // handle GET /metrics
+        if(strcmp(req.path, "/metrics") == 0)
+        {
+            handle_get_metrics(client_fd, &metrics);
+            close(client_fd);
             metrics.active_connections -= 1;
             continue;
         }

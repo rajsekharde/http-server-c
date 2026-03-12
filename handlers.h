@@ -61,9 +61,22 @@ typedef struct
 int handle_get_metrics(int client_fd, metrics_struct* metrics)
 {
     char body[128];
-    sprintf(body, "{\"Total Connections\":%d,\"Active Connections\":%d}",
+    sprintf(body, "{\"total_connections\":%d,\"active_connections\":%d}",
             metrics->total_connections,
             metrics->active_connections);
+
+    char header[256];
+    sprintf(header,
+            "HTTP/1.1 200 OK\r\n"
+            "Content-Type: application/json\r\n"
+            "Content-Length: %ld\r\n"
+            "\r\n",
+            strlen(body));
+    
+    write(client_fd, header, strlen(header));
+    write(client_fd, body, strlen(body));
+
+    return 1;
 }
 
 #endif
