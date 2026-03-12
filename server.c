@@ -5,6 +5,14 @@
 #include <netinet/in.h>
 #include <stdlib.h>
 
+typedef struct {
+    char method[8];
+    char path[256];
+    char version[16];
+} http_request;
+
+int parse_http_request(char* buffer, http_request* request);
+
 int main()
 {
     // main listening socket
@@ -53,8 +61,11 @@ int main()
         char buffer[1024] = {0};
         read(client_fd, buffer, 1024);
 
-        // logging
-        printf("Request Received: %s\n", buffer);
+        printf("\nRequest Received: %s", buffer); // logging
+
+        http_request req;
+        parse_http_request(buffer, &req); // parse http request and store in req
+        // printf("Method: %s, Path: %s, Version: %s\n", req.method, req.path, req.version);
 
         // response in http format
         char *response = "HTTP/1.1 200 OK\nContent-Type: text/html\nContent-Length: 20\n\n<h1>Hello World</h1>";
@@ -67,4 +78,13 @@ int main()
     }
 
     return 0;
+}
+
+// Parse HTTP request to get Method, Path, Version and store in an http_request struct
+int parse_http_request(char* buffer, http_request* request)
+{
+    return sscanf(buffer, "%7s %255s %15s",
+        request->method,
+        request->path,
+        request->version);
 }
