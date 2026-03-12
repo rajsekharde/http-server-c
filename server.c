@@ -18,15 +18,23 @@ int main()
     // socket address structure specifically for IPv4
     struct sockaddr_in sock_addr;
     sock_addr.sin_family = AF_INET;         // use IPv4 Address
-    sock_addr.sin_addr.s_addr = INADDR_ANY; // uisten on all available newtwork interfaces
+    sock_addr.sin_addr.s_addr = INADDR_ANY; // listen on all available newtwork interfaces
     sock_addr.sin_port = htons(8080);       // specify port number in correct order using htons()
     int addr_len = sizeof(sock_addr);
 
     // bind socket fd & address structure
-    bind(server_fd, (struct sockaddr *)&sock_addr, sizeof(sock_addr));
+    if(bind(server_fd, (struct sockaddr *)&sock_addr, sizeof(sock_addr)) < 0)
+    {
+        perror("Bind Failed");
+        exit(EXIT_FAILURE);
+    }
 
     // set up socket for listening to connections & max pending conn queue length to 10
-    listen(server_fd, 10);
+    if(listen(server_fd, 10) < 0)
+    {
+        perror("Listen Failed");
+        exit(EXIT_FAILURE);
+    }
 
     // logging
     printf("Server listening on port 8080...\n");
@@ -35,6 +43,11 @@ int main()
     {
         // blocking call. returns fd for new client conn socket
         int client_fd = accept(server_fd, (struct sockaddr *)&sock_addr, (socklen_t *)&addr_len);
+        if(client_fd < 0)
+        {
+            perror("Client Socket Failed");
+            continue;
+        }
 
         // store request in buffer
         char buffer[1024] = {0};
