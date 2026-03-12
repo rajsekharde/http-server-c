@@ -5,14 +5,8 @@
 #include <netinet/in.h>
 #include <stdlib.h>
 
-typedef struct {
-    char method[8];
-    char path[256];
-    char version[16];
-} http_request;
-
-int parse_http_request(char* buffer, http_request* request);
-int handle_get_index(int client_fd);
+#include "request.h"
+#include "handlers.h"
 
 int main()
 {
@@ -48,6 +42,11 @@ int main()
     // logging
     printf("Server listening on port 8080...\n");
 
+    // initialize metrics
+    metrics_struct metrics;
+    metrics.total_connections = 0;
+    metrics.active_connections = 0;
+
     while (1)
     {
         // blocking call. returns fd for new client conn socket
@@ -58,6 +57,9 @@ int main()
             continue;
         }
 
+        metrics.active_connections += 1;
+        metrics.total_connections += 1;
+
         // store request in buffer
         char buffer[1024] = {0};
         read(client_fd, buffer, 1024);
@@ -65,19 +67,20 @@ int main()
         printf("\nRequest Received: %s", buffer); // logging
 
         http_request req;
-        if(parse_http_request(buffer, &req) != 3) // parse http request and store in req
+        if(parse_http_request(buffer, &req) != 1) // parse http request and store in req
         {
             perror("Request Parsing Failed");
             close(client_fd);
+            metrics.active_connections -= 1;
             continue;
         }
         // printf("Method: %s, Path: %s, Version: %s\n", req.method, req.path, req.version);
 
-        // check for path traversal attack
-        if (strstr(req.path, "..") != NULL)
+        if(validate_request(&req) != 1) // validate request
         {
             perror("Invalid Request");
             close(client_fd);
+            metrics.active_connections -= 1;
             continue;
         }
 
@@ -86,69 +89,10 @@ int main()
         {
             handle_get_index(client_fd);
             close(client_fd); // close connection for current client
+            metrics.active_connections -= 1;
             continue;
         }
-
-        /*
-        // response in http format
-        char *response = "HTTP/1.1 200 OK\nContent-Type: text/html\nContent-Length: 20\n\n<h1>Hello World</h1>";
-
-        // push the response back to client through the socket
-        write(client_fd, response, strlen(response));
-
-        // close connection for current client
-        close(client_fd);
-        */
     }
 
     return 0;
-}
-
-// Parse HTTP request to get Method, Path, Version and store in an http_request struct
-int parse_http_request(char* buffer, http_request* request)
-{
-    // return number of variables parsed. success = 3
-    return sscanf(buffer, "%7s %255s %15s",
-        request->method,
-        request->path,
-        request->version);
-}
-
-// Handler for GET "/"
-int handle_get_index(int client_fd)
-{
-    FILE* file = fopen("static/index.html", "rb");
-    if(file == NULL) {
-        perror("File Open Failed");
-        return -1;
-    }
-
-    fseek(file, 0, SEEK_END);
-    long size = ftell(file);
-    rewind(file);
-
-    // prepare header
-    char header[512];
-    sprintf(header,
-    "HTTP/1.1 200 OK\r\n"
-    "Content-Type: text/html\r\n"
-    "Content-Length: %ld\r\n"
-    "\r\n",
-    size);
-    // write header to client socket
-    write(client_fd, header, strlen(header));
-
-    // write file contents to client socket
-    char file_buffer[1024];
-    size_t bytes;
-
-    while((bytes = fread(file_buffer, 1, sizeof(file_buffer), file)) > 0)
-    {
-        write(client_fd, file_buffer, bytes);
-    }
-
-    // close file
-    fclose(file);
-
-    return 1;
 }

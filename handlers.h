@@ -1,0 +1,69 @@
+#ifndef HANDLERS_H
+#define HANDLERS_H
+
+#include <stdio.h> // FILE, fopen()
+#include <unistd.h> // write() syscall
+#include <string.h> // strlen()
+
+/*
+Functions for handling api endpoints
+*/
+
+// handle GET /
+int handle_get_index(int client_fd)
+{
+    // open index.html
+    FILE* file = fopen("static/index.html", "r");
+    if(file == NULL)
+    {
+        perror("Failed to open static/index.html");
+        return -1;
+    }
+
+    fseek(file, 0, SEEK_END);
+    long size = ftell(file); // get file size
+    rewind(file);
+
+    // prepare header
+    char header[512];
+    sprintf(header,
+            "HTTP/1.1 200 OK\r\n"
+            "Content-Type: text/html\r\n"
+            "Content-Length: %ld\r\n"
+            "\r\n",
+            size);
+    
+    // write header to client socket
+    write(client_fd, header, strlen(header));
+
+    // write file contents to client socket
+    char file_buffer[1024];
+    size_t bytes;
+
+    while ((bytes = fread(file_buffer, 1, sizeof(file_buffer), file)) > 0)
+    {
+        write(client_fd, file_buffer, bytes);
+    }
+
+    // close file
+    fclose(file);
+
+    return 1;
+}
+
+typedef struct
+{
+    int total_connections;
+    int active_connections;
+} metrics_struct;
+
+// handle GET /metrics
+int handle_get_metrics(int client_fd, metrics_struct* metrics)
+{
+    char body[128];
+    sprintf(body, "{\"Total Connections\":%d,\"Active Connections\":%d}",
+            metrics->total_connections,
+            metrics->active_connections);
+}
+
+#endif
