@@ -3,11 +3,17 @@
 #include <unistd.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include <stdlib.h>
 
 int main()
 {
     // main listening socket
     int server_fd = socket(AF_INET, SOCK_STREAM, 0);
+    if(server_fd < 0)
+    {
+        perror("Socket Failed");
+        exit(EXIT_FAILURE);
+    }
 
     // socket address structure specifically for IPv4
     struct sockaddr_in sock_addr;
