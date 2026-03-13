@@ -97,6 +97,7 @@ int main()
     return 0;
 }
 
+// threaded function for handling clients in background
 void* handle_client(void* args)
 {
     client_data* data = (client_data*)args;
@@ -104,6 +105,7 @@ void* handle_client(void* args)
     int client_fd = data->client_fd;
     metrics_struct* metrics = data->metrics;
 
+    // free allocated client data
     free(data);
 
     pthread_mutex_lock(&lock);
@@ -118,59 +120,37 @@ void* handle_client(void* args)
     printf("\nRequest Received: %s", buffer); // logging
 
     http_request req;
-    if (parse_http_request(buffer, &req) != 1) // parse http request and store in req
+    
+    if (parse_http_request(buffer, &req) == 1) // parse http request and store in req
+    {
+        if (validate_request(&req) == 1) // validate request
+        {
+            if (strcmp(req.path, "/") == 0)
+            {
+                // handle GET /
+                handle_get_index(client_fd);
+            }
+            else if (strcmp(req.path, "/metrics") == 0)
+            {
+                // handle GET /metrics
+                handle_get_metrics(client_fd, metrics);
+            }
+            else
+            {
+                // handle 404 Not found
+                handle_file_not_found(client_fd);
+            }
+        }
+        else
+        {
+            perror("Invalid Request");
+        }
+    }
+    else
     {
         perror("Request Parsing Failed");
-        close(client_fd);
-
-        pthread_mutex_lock(&lock);
-        metrics->active_connections -= 1;
-        pthread_mutex_unlock(&lock);
-
-        return NULL;
-    }
-    // printf("Method: %s, Path: %s, Version: %s\n", req.method, req.path, req.version);
-
-    if (validate_request(&req) != 1) // validate request
-    {
-        perror("Invalid Request");
-        close(client_fd);
-
-        pthread_mutex_lock(&lock);
-        metrics->active_connections -= 1;
-        pthread_mutex_unlock(&lock);
-
-        return NULL;
     }
 
-    // handle GET /
-    if (strcmp(req.path, "/") == 0)
-    {
-        handle_get_index(client_fd);
-        close(client_fd); // close connection for current client
-
-        pthread_mutex_lock(&lock);
-        metrics->active_connections -= 1;
-        pthread_mutex_unlock(&lock);
-
-        return NULL;
-    }
-
-    // handle GET /metrics
-    if (strcmp(req.path, "/metrics") == 0)
-    {
-        handle_get_metrics(client_fd, metrics);
-        close(client_fd);
-
-        pthread_mutex_lock(&lock);
-        metrics->active_connections -= 1;
-        pthread_mutex_unlock(&lock);
-
-        return NULL;
-    }
-
-    // handle 404 not found
-    handle_file_not_found(client_fd);
     close(client_fd);
 
     pthread_mutex_lock(&lock);
