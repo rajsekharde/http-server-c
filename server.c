@@ -105,7 +105,7 @@ void* handle_client(void* args)
     int client_fd = data->client_fd;
     metrics_struct* metrics = data->metrics;
 
-    // free allocated client data
+    // free allocated heap memory for client data
     free(data);
 
     pthread_mutex_lock(&lock);
@@ -120,7 +120,7 @@ void* handle_client(void* args)
     printf("\nRequest Received: %s", buffer); // logging
 
     http_request req;
-    
+
     if (parse_http_request(buffer, &req) == 1) // parse http request and store in req
     {
         if (validate_request(&req) == 1) // validate request
@@ -151,8 +151,10 @@ void* handle_client(void* args)
         perror("Request Parsing Failed");
     }
 
+    // close socket
     close(client_fd);
 
+    // update metrics
     pthread_mutex_lock(&lock);
     metrics->active_connections -= 1;
     pthread_mutex_unlock(&lock);
