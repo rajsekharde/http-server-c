@@ -1,10 +1,6 @@
 #ifndef REQUEST_H
 #define REQUEST_H
 
-/*
-Functions for parsing and validating http requests
-*/
-
 typedef struct
 {
     char method[8];
