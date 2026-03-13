@@ -11,4 +11,6 @@ typedef struct
 
 int handle_get_metrics(int client_fd, metrics_struct *metrics);
 
+int handle_file_not_found(int client_fd);
+
 #endif

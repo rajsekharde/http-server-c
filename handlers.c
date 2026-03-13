@@ -71,3 +71,22 @@ int handle_get_metrics(int client_fd, metrics_struct *metrics)
 
     return 1;
 }
+
+// handle 404: file not found
+int handle_file_not_found(int client_fd)
+{
+    char header[256];
+    char body[256];
+
+    sprintf(body, "<h1>404: File not found</h1>");
+
+    sprintf(header,
+        "HTTP/1.1 404 Not Found\r\n"
+        "Content-Type: text/html\r\n"
+        "Content-Length: %ld\r\n"
+        "\r\n",
+        strlen(body));
+    
+    write(client_fd, header, strlen(header));
+    write(client_fd, body, strlen(body));
+}
