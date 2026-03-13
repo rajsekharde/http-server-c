@@ -58,6 +58,9 @@ int main()
     metrics.total_connections = 0;
     metrics.active_connections = 0;
 
+    // mutex initialization
+    pthread_mutex_init(&lock, NULL);
+
     while (1)
     {
         // blocking call. returns fd for new client connection socket
@@ -69,24 +72,39 @@ int main()
         }
 
         pthread_t thread;
-        client_data data = {client_fd, &metrics};
 
-        pthread_mutex_init(&lock, NULL);
-        pthread_create(&thread, NULL, handle_client, &data);
+        // allocate heap memory for client data
+        client_data* data = (client_data*)malloc(sizeof(client_data));
+        if(data == NULL)
+        {
+            perror("Memory Allocation Failed");
+            close(client_fd);
+            continue;
+        }
+        data->client_fd = client_fd;
+        data->metrics = &metrics;
 
-        pthread_join(thread, NULL);
-        pthread_mutex_destroy(&lock);
+        // create a new thread for handling client
+        pthread_create(&thread, NULL, handle_client, data);
+        
+        // detach the thread to run in background
+        pthread_detach(thread);
     }
+
+    // destroy mutex
+    pthread_mutex_destroy(&lock);
 
     return 0;
 }
 
 void* handle_client(void* args)
 {
-    client_data data = *(client_data*)args;
+    client_data* data = (client_data*)args;
 
-    int client_fd = data.client_fd;
-    metrics_struct* metrics = data.metrics;
+    int client_fd = data->client_fd;
+    metrics_struct* metrics = data->metrics;
+
+    free(data);
 
     pthread_mutex_lock(&lock);
     metrics->active_connections += 1;
