@@ -4,9 +4,18 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <stdlib.h>
+#include <pthread.h>
 
 #include "request.h"
 #include "handlers.h"
+
+typedef struct
+{
+    int client_fd;
+    metrics_struct* metrics;
+} client_data;
+
+void* handle_client(void* args);
 
 int main()
 {
@@ -49,7 +58,7 @@ int main()
 
     while (1)
     {
-        // blocking call. returns fd for new client conn socket
+        // blocking call. returns fd for new client connection socket
         int client_fd = accept(server_fd, (struct sockaddr *)&sock_addr, (socklen_t *)&addr_len);
         if(client_fd < 0)
         {
@@ -57,56 +66,71 @@ int main()
             continue;
         }
 
-        metrics.active_connections += 1;
-        metrics.total_connections += 1;
-
-        // store request in buffer
-        char buffer[1024] = {0};
-        read(client_fd, buffer, 1024);
-
-        printf("\nRequest Received: %s", buffer); // logging
-
-        http_request req;
-        if(parse_http_request(buffer, &req) != 1) // parse http request and store in req
-        {
-            perror("Request Parsing Failed");
-            close(client_fd);
-            metrics.active_connections -= 1;
-            continue;
-        }
-        // printf("Method: %s, Path: %s, Version: %s\n", req.method, req.path, req.version);
-
-        if(validate_request(&req) != 1) // validate request
-        {
-            perror("Invalid Request");
-            close(client_fd);
-            metrics.active_connections -= 1;
-            continue;
-        }
-
-        // handle GET /
-        if(strcmp(req.path, "/") == 0)
-        {
-            handle_get_index(client_fd);
-            close(client_fd); // close connection for current client
-            metrics.active_connections -= 1;
-            continue;
-        }
-
-        // handle GET /metrics
-        if(strcmp(req.path, "/metrics") == 0)
-        {
-            handle_get_metrics(client_fd, &metrics);
-            close(client_fd);
-            metrics.active_connections -= 1;
-            continue;
-        }
-
-        // handle 404 not found
-        handle_file_not_found(client_fd);
-        close(client_fd);
-        metrics.active_connections -= 1;
+        pthread_t thread;
+        client_data data = {client_fd, &metrics};
+        pthread_create(&thread, NULL, handle_client, &data);
+        pthread_join(thread, NULL);
     }
 
     return 0;
+}
+
+void* handle_client(void* args)
+{
+    client_data data = *(client_data*)args;
+
+    int client_fd = data.client_fd;
+    metrics_struct* metrics = data.metrics;
+
+    metrics->active_connections += 1;
+    metrics->total_connections += 1;
+
+    // store request in buffer
+    char buffer[1024] = {0};
+    read(client_fd, buffer, 1024);
+
+    printf("\nRequest Received: %s", buffer); // logging
+
+    http_request req;
+    if (parse_http_request(buffer, &req) != 1) // parse http request and store in req
+    {
+        perror("Request Parsing Failed");
+        close(client_fd);
+        metrics->active_connections -= 1;
+        return NULL;
+    }
+    // printf("Method: %s, Path: %s, Version: %s\n", req.method, req.path, req.version);
+
+    if (validate_request(&req) != 1) // validate request
+    {
+        perror("Invalid Request");
+        close(client_fd);
+        metrics->active_connections -= 1;
+        return NULL;
+    }
+
+    // handle GET /
+    if (strcmp(req.path, "/") == 0)
+    {
+        handle_get_index(client_fd);
+        close(client_fd); // close connection for current client
+        metrics->active_connections -= 1;
+        return NULL;
+    }
+
+    // handle GET /metrics
+    if (strcmp(req.path, "/metrics") == 0)
+    {
+        handle_get_metrics(client_fd, metrics);
+        close(client_fd);
+        metrics->active_connections -= 1;
+        return NULL;
+    }
+
+    // handle 404 not found
+    handle_file_not_found(client_fd);
+    close(client_fd);
+    metrics->active_connections -= 1;
+
+    return NULL;
 }
