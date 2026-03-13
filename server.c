@@ -101,6 +101,11 @@ int main()
             metrics.active_connections -= 1;
             continue;
         }
+
+        // handle 404 not found
+        handle_file_not_found(client_fd);
+        close(client_fd);
+        metrics.active_connections -= 1;
     }
 
     return 0;
