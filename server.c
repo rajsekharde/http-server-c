@@ -17,6 +17,8 @@ typedef struct
 
 void* handle_client(void* args);
 
+pthread_mutex_t lock;
+
 int main()
 {
     // main listening socket
@@ -68,8 +70,12 @@ int main()
 
         pthread_t thread;
         client_data data = {client_fd, &metrics};
+
+        pthread_mutex_init(&lock, NULL);
         pthread_create(&thread, NULL, handle_client, &data);
+
         pthread_join(thread, NULL);
+        pthread_mutex_destroy(&lock);
     }
 
     return 0;
@@ -82,8 +88,10 @@ void* handle_client(void* args)
     int client_fd = data.client_fd;
     metrics_struct* metrics = data.metrics;
 
+    pthread_mutex_lock(&lock);
     metrics->active_connections += 1;
     metrics->total_connections += 1;
+    pthread_mutex_unlock(&lock);
 
     // store request in buffer
     char buffer[1024] = {0};
@@ -96,7 +104,11 @@ void* handle_client(void* args)
     {
         perror("Request Parsing Failed");
         close(client_fd);
+
+        pthread_mutex_lock(&lock);
         metrics->active_connections -= 1;
+        pthread_mutex_unlock(&lock);
+
         return NULL;
     }
     // printf("Method: %s, Path: %s, Version: %s\n", req.method, req.path, req.version);
@@ -105,7 +117,11 @@ void* handle_client(void* args)
     {
         perror("Invalid Request");
         close(client_fd);
+
+        pthread_mutex_lock(&lock);
         metrics->active_connections -= 1;
+        pthread_mutex_unlock(&lock);
+
         return NULL;
     }
 
@@ -114,7 +130,11 @@ void* handle_client(void* args)
     {
         handle_get_index(client_fd);
         close(client_fd); // close connection for current client
+
+        pthread_mutex_lock(&lock);
         metrics->active_connections -= 1;
+        pthread_mutex_unlock(&lock);
+
         return NULL;
     }
 
@@ -123,14 +143,21 @@ void* handle_client(void* args)
     {
         handle_get_metrics(client_fd, metrics);
         close(client_fd);
+
+        pthread_mutex_lock(&lock);
         metrics->active_connections -= 1;
+        pthread_mutex_unlock(&lock);
+
         return NULL;
     }
 
     // handle 404 not found
     handle_file_not_found(client_fd);
     close(client_fd);
+
+    pthread_mutex_lock(&lock);
     metrics->active_connections -= 1;
+    pthread_mutex_unlock(&lock);
 
     return NULL;
 }
