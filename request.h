@@ -12,26 +12,8 @@ typedef struct
     char version[16];
 } http_request;
 
-// parse request stored in buffer and store method, path, version in req
-int parse_http_request(char* buffer, http_request* req)
-{
-    int parse_res = sscanf(buffer, "%7s %255s %15s",
-           req->method,
-           req->path,
-           req->version);
-    
-    return (parse_res == 3); // 1 if sscanf returns 3 (no. of fields), else 0
-}
+int parse_http_request(char *buffer, http_request *req);
 
-// validate request
-int validate_request(http_request* req)
-{
-    // chech for path traversal attack
-    if(strstr(req->path, "..") != NULL)
-    {
-        return -1;
-    }
-    return 1;
-}
+int validate_request(http_request *req);
 
 #endif
