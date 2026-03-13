@@ -1,5 +1,9 @@
-Serve any type of file + return 404 response if file not found
+Serve any type of file
+- css, js, image files
 
 Concurrency (serve multiple clients at once)
+- thread per connection
+- thread poll
+- epoll event loop
 
-HTTP request parsing (headers, body)
+Proper HTTP request parsing (headers, body)
