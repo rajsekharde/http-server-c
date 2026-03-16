@@ -10,6 +10,7 @@ Functions for parsing and validating http requests
 // parse request stored in buffer and store method, path, version in req
 int parse_http_request(char *buffer, http_request *req)
 {
+    // printf("\n%s\n", buffer);
     int parse_res = sscanf(buffer, "%7s %255s %15s",
                            req->method,
                            req->path,

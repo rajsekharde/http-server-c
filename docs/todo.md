@@ -1,8 +1,3 @@
-Proper logging
-- request info: header, body
-- timestamp
-- response status
-
 Proper HTTP request parsing
 - parse headers, body
 

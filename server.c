@@ -230,9 +230,22 @@ void* handle_client(void* args)
     double elapsed = (end.tv_sec - start.tv_sec) + (end.tv_usec - start.tv_usec) / 1e6;
 
     // logging
+    size_t len = strlen(buffer);
+
+    // check if buffer ends with "\r\n\r\n"
+    int needs_crlf = 0;
+    if (len < 4 || strcmp(&buffer[len - 4], "\r\n\r\n") != 0)
+    {
+        needs_crlf = 1;
+    }
+
     log_timestamp();
     printf("%d   %s   %f s\n", resp_c, resp_m, elapsed);
     printf("%s", buffer);
+    if(needs_crlf)
+    {
+        printf("\r\n\r\n");
+    }
 
     return NULL;
 }
