@@ -1,7 +1,3 @@
-Graceful shutdown
-- detect an interrupt signal, finish current tasks, close fd's and destroy mutexes
-- print shutdown message / logs
-
 Proper logging
 - request info: header, body
 - timestamp

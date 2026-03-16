@@ -7,10 +7,12 @@
 #include <pthread.h>
 #include <stdatomic.h>
 #include <signal.h>
+#include <sys/time.h>
 
 #include "request.h"
 #include "handlers.h"
 
+// listening socket fd
 int server_fd;
 
 typedef struct
@@ -120,10 +122,12 @@ int main()
     }
 
     printf("\nWaiting for active connections to finish...\n");
+    usleep(300000); // sleep 0.3 s
+
     while(metrics.active_connections > 0)
     {
         printf("Active connections: %d\n", metrics.active_connections);
-        sleep(1);
+        sleep(1); // sleep 1 s
     }
 
     // destroy mutex
@@ -137,6 +141,13 @@ int main()
 // threaded function for handling clients in background
 void* handle_client(void* args)
 {
+    // start timer
+    struct timeval start, end;
+    gettimeofday(&start, NULL);
+
+    int resp_c = 200;
+    char* resp_m = "OK";
+
     client_data* data = (client_data*)args;
 
     int client_fd = data->client_fd;
@@ -153,8 +164,6 @@ void* handle_client(void* args)
     // store request in buffer
     char buffer[1024] = {0};
     read(client_fd, buffer, 1024);
-
-    printf("\nRequest Received: %s", buffer); // logging
 
     http_request req;
 
@@ -176,16 +185,22 @@ void* handle_client(void* args)
             {
                 // handle 404 Not found
                 handle_file_not_found(client_fd);
+                resp_c = 404;
+                resp_m = "Not Found";
             }
         }
         else
         {
             perror("Invalid Request");
+            resp_c = 400;
+            resp_m = "Bad Request";
         }
     }
     else
     {
         perror("Request Parsing Failed");
+        resp_c = 500;
+        resp_m = "Internal Server Error";
     }
 
     // close socket
@@ -195,6 +210,17 @@ void* handle_client(void* args)
     pthread_mutex_lock(&lock);
     metrics->active_connections -= 1;
     pthread_mutex_unlock(&lock);
+
+    // testing
+    // sleep(5);
+
+    // stop timer
+    gettimeofday(&end, NULL);
+    double elapsed = (end.tv_sec - start.tv_sec) + (end.tv_usec - start.tv_usec) / 1e6;
+
+    // logging
+    printf("\n%s", buffer); // logging
+    printf("%d\t%s\t%f s\n\n",resp_c, resp_m, elapsed);
 
     return NULL;
 }
