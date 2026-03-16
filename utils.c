@@ -1,5 +1,7 @@
 #include <stdio.h>
 #include <sys/time.h>
+#include <time.h>
+#include <string.h>
 
 #include "utils.h"
 
@@ -18,6 +20,7 @@ void log_timestamp()
     printf("\033[1;34m[%s]\033[0m   ", buf);
 }
 
+// print request logs
 void log_request(char* buffer, double elapsed, int resp_c, char* resp_m)
 {
     size_t len = strlen(buffer);
@@ -36,10 +39,4 @@ void log_request(char* buffer, double elapsed, int resp_c, char* resp_m)
     {
         printf("\r\n\r\n");
     }
-}
-
-// checking module imports
-void print_msg(char* msg)
-{
-    printf("%s message found\n", msg);
 }

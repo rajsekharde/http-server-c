@@ -220,8 +220,7 @@ void* handle_client(void* args)
     double elapsed = (end.tv_sec - start.tv_sec) + (end.tv_usec - start.tv_usec) / 1e6;
 
     // logging
-    // log_request(buffer, elapsed, resp_c, resp_m);
-    print_msg(resp_m);
+    log_request(buffer, elapsed, resp_c, resp_m);
 
     return NULL;
 }

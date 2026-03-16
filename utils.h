@@ -5,6 +5,4 @@
 
 void log_request(char *buffer, double elapsed, int resp_c, char *resp_m);
 
-void print_msg(char *msg);
-
 #endif
