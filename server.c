@@ -5,9 +5,13 @@
 #include <netinet/in.h>
 #include <stdlib.h>
 #include <pthread.h>
+#include <stdatomic.h>
+#include <signal.h>
 
 #include "request.h"
 #include "handlers.h"
+
+int server_fd;
 
 typedef struct
 {
@@ -19,10 +23,23 @@ void* handle_client(void* args);
 
 pthread_mutex_t lock;
 
+volatile sig_atomic_t shutdown_requested = 0;
+
+// close server on detecting an interrupt
+void handle_signal(int sig)
+{
+    shutdown_requested = 1;
+    close(server_fd);
+}
+
 int main()
 {
+    // register handlers for interrupt signals
+    signal(SIGINT, handle_signal); // Ctrl + C
+    signal(SIGTERM, handle_signal); // Process kill
+
     // main listening socket
-    int server_fd = socket(AF_INET, SOCK_STREAM, 0);
+    server_fd = socket(AF_INET, SOCK_STREAM, 0);
     if(server_fd < 0)
     {
         perror("Socket Failed");
@@ -69,12 +86,15 @@ int main()
     // mutex initialization
     pthread_mutex_init(&lock, NULL);
 
-    while (1)
+    while (!shutdown_requested)
     {
         // blocking call. returns fd for new client connection socket
         int client_fd = accept(server_fd, (struct sockaddr *)&sock_addr, (socklen_t *)&addr_len);
         if(client_fd < 0)
         {
+            if(shutdown_requested) {
+                break;
+            }
             perror("Client Socket Failed");
             continue;
         }
@@ -99,8 +119,17 @@ int main()
         pthread_detach(thread);
     }
 
+    printf("\nWaiting for active connections to finish...\n");
+    while(metrics.active_connections > 0)
+    {
+        printf("Active connections: %d\n", metrics.active_connections);
+        sleep(1);
+    }
+
     // destroy mutex
     pthread_mutex_destroy(&lock);
+
+    printf("Server shut down\n");
 
     return 0;
 }
