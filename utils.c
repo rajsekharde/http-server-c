@@ -9,6 +9,17 @@
 Misc functions
 */
 
+#define CLEAR "\033[0m"
+#define BLACK "\033[1;30m"
+#define RED "\033[1;31m"
+#define GREEN "\033[1;32m"
+#define YELLOW "\033[1;33m"
+#define BLUE "\033[1;34m"
+#define MAGENTA "\033[1;35m"
+#define CYAN "\033[1;36m"
+#define WHITE "\033[1;37m"
+#define GREY "\033[37m"
+
 void log_timestamp()
 {
     time_t now = time(NULL);
@@ -17,7 +28,7 @@ void log_timestamp()
     char buf[64];
     strftime(buf, sizeof(buf), "%Y-%m-%d %H:%M:%S", t);
 
-    printf("\033[1;34m[%s]\033[0m   ", buf);
+    printf("[%s]   ", buf);
 }
 
 // print request logs
@@ -32,9 +43,15 @@ void log_request(char* buffer, double elapsed, int resp_c, char* resp_m)
         needs_crlf = 1;
     }
 
+    char* code_col = GREEN;
+    if(resp_c != 200)
+    {
+        code_col = RED;
+    }
+
     log_timestamp();
-    printf("\033[1;34m%d   %s   %f s\033[0m\n", resp_c, resp_m, elapsed);
-    printf("%s", buffer);
+    printf("%s%d   %s%s   %f s\n", code_col, resp_c, resp_m, CLEAR, elapsed);
+    printf("%s%s%s", GREY, buffer, CLEAR);
     if (needs_crlf)
     {
         printf("\r\n\r\n");

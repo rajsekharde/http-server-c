@@ -16,6 +16,8 @@
 // listening socket fd
 int server_fd;
 
+int PORT = 8080; // server port
+
 typedef struct
 {
     int client_fd;
@@ -41,6 +43,8 @@ int main()
     signal(SIGINT, handle_signal); // Ctrl + C
     signal(SIGTERM, handle_signal); // Process kill
 
+    printf("%s   Process ID: %d\n", INFO, getpid());
+
     // main listening socket
     server_fd = socket(AF_INET, SOCK_STREAM, 0);
     if(server_fd < 0)
@@ -48,12 +52,13 @@ int main()
         perror("Socket Failed");
         exit(EXIT_FAILURE);
     }
+    printf("%s   Socket Created: FD = %d\n", INFO, server_fd);
 
     // socket address structure specifically for IPv4
     struct sockaddr_in sock_addr;
     sock_addr.sin_family = AF_INET;         // use IPv4 Address
     sock_addr.sin_addr.s_addr = INADDR_ANY; // listen on all available newtwork interfaces
-    sock_addr.sin_port = htons(8080);       // specify port number in correct order using htons()
+    sock_addr.sin_port = htons(PORT);       // specify port number in correct order using htons()
     int addr_len = sizeof(sock_addr);
 
     // change socket option to let the server reuse port 8080 if it's in TIME_WAIT state
@@ -70,6 +75,7 @@ int main()
         perror("Bind Failed");
         exit(EXIT_FAILURE);
     }
+    printf("%s   Socket bound to port %d\n", INFO, PORT);
 
     // set up socket for listening to connections & max pending conn queue length to 10
     if(listen(server_fd, 10) < 0)
@@ -77,9 +83,7 @@ int main()
         perror("Listen Failed");
         exit(EXIT_FAILURE);
     }
-
-    // logging
-    printf("%s   Server listening on port 8080...\n\n", INFO);
+    printf("%s   Server listening on port %d\n\n", INFO, PORT);
 
     // initialize metrics
     metrics_struct metrics;
@@ -217,6 +221,8 @@ void* handle_client(void* args)
 
     // stop timer
     gettimeofday(&end, NULL);
+
+    // response time in seconds
     double elapsed = (end.tv_sec - start.tv_sec) + (end.tv_usec - start.tv_usec) / 1e6;
 
     // logging

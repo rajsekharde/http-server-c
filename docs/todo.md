@@ -1,3 +1,5 @@
+Add mutex lock to request logging
+
 Proper HTTP request parsing
 - parse headers, body
 

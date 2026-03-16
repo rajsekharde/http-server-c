@@ -11,6 +11,7 @@ Functions for handling api endpoints
 // handle GET /
 int handle_get_index(int client_fd)
 {
+    // sleep(5); // testing
     // open index.html
     FILE *file = fopen("static/index.html", "r");
     if (file == NULL)
