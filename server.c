@@ -11,6 +11,7 @@
 
 #include "request.h"
 #include "handlers.h"
+#include "utils.h"
 
 // listening socket fd
 int server_fd;
@@ -32,17 +33,6 @@ void handle_signal(int sig)
 {
     shutdown_requested = 1;
     close(server_fd);
-}
-
-void log_timestamp()
-{
-    time_t now = time(NULL);
-    struct tm *t = localtime(&now);
-
-    char buf[64];
-    strftime(buf, sizeof(buf), "%Y-%m-%d %H:%M:%S", t);
-
-    printf("\033[1;34m[%s]\033[0m   ", buf);
 }
 
 int main()
@@ -89,7 +79,7 @@ int main()
     }
 
     // logging
-    printf("Server listening on port 8080...\n\n");
+    printf("%s   Server listening on port 8080...\n\n", INFO);
 
     // initialize metrics
     metrics_struct metrics;
@@ -132,7 +122,7 @@ int main()
         pthread_detach(thread);
     }
 
-    printf("\nWaiting for active connections to finish...\n");
+    printf("\n%s   Waiting for active connections to finish...\n", INFO);
     usleep(300000); // sleep 0.3 s
 
     while(metrics.active_connections > 0)
@@ -144,7 +134,7 @@ int main()
     // destroy mutex
     pthread_mutex_destroy(&lock);
 
-    printf("Server shut down\n");
+    printf("%s   Server shut down\n", INFO);
 
     return 0;
 }
@@ -230,22 +220,8 @@ void* handle_client(void* args)
     double elapsed = (end.tv_sec - start.tv_sec) + (end.tv_usec - start.tv_usec) / 1e6;
 
     // logging
-    size_t len = strlen(buffer);
-
-    // check if buffer ends with "\r\n\r\n"
-    int needs_crlf = 0;
-    if (len < 4 || strcmp(&buffer[len - 4], "\r\n\r\n") != 0)
-    {
-        needs_crlf = 1;
-    }
-
-    log_timestamp();
-    printf("\033[1;34m%d   %s   %f s\033[0m\n", resp_c, resp_m, elapsed);
-    printf("%s", buffer);
-    if(needs_crlf)
-    {
-        printf("\r\n\r\n");
-    }
+    // log_request(buffer, elapsed, resp_c, resp_m);
+    print_msg(resp_m);
 
     return NULL;
 }
