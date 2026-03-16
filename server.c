@@ -36,6 +36,14 @@ int main()
     sock_addr.sin_port = htons(8080);       // specify port number in correct order using htons()
     int addr_len = sizeof(sock_addr);
 
+    // change socket option to let the server reuse port 8080 if it's in TIME_WAIT state
+    int opt = 1;
+    if (setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) < 0)
+    {
+        perror("setsockopt(SO_REUSEADDR) Failed");
+        exit(EXIT_FAILURE);
+    }
+
     // bind socket fd & address structure
     if(bind(server_fd, (struct sockaddr *)&sock_addr, sizeof(sock_addr)) < 0)
     {
