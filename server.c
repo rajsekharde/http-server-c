@@ -34,6 +34,17 @@ void handle_signal(int sig)
     close(server_fd);
 }
 
+void log_timestamp()
+{
+    time_t now = time(NULL);
+    struct tm *t = localtime(&now);
+
+    char buf[64];
+    strftime(buf, sizeof(buf), "%Y-%m-%d %H:%M:%S", t);
+
+    printf("[%s]   ", buf);
+}
+
 int main()
 {
     // register handlers for interrupt signals
@@ -78,7 +89,7 @@ int main()
     }
 
     // logging
-    printf("Server listening on port 8080...\n");
+    printf("Server listening on port 8080...\n\n");
 
     // initialize metrics
     metrics_struct metrics;
@@ -219,8 +230,9 @@ void* handle_client(void* args)
     double elapsed = (end.tv_sec - start.tv_sec) + (end.tv_usec - start.tv_usec) / 1e6;
 
     // logging
-    printf("\n%s", buffer); // logging
-    printf("%d\t%s\t%f s\n\n",resp_c, resp_m, elapsed);
+    log_timestamp();
+    printf("%d   %s   %f s\n", resp_c, resp_m, elapsed);
+    printf("%s", buffer);
 
     return NULL;
 }
