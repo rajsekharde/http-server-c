@@ -42,7 +42,7 @@ void log_timestamp()
     char buf[64];
     strftime(buf, sizeof(buf), "%Y-%m-%d %H:%M:%S", t);
 
-    printf("[%s]   ", buf);
+    printf("\033[1;34m[%s]\033[0m   ", buf);
 }
 
 int main()
@@ -240,7 +240,7 @@ void* handle_client(void* args)
     }
 
     log_timestamp();
-    printf("%d   %s   %f s\n", resp_c, resp_m, elapsed);
+    printf("\033[1;34m%d   %s   %f s\033[0m\n", resp_c, resp_m, elapsed);
     printf("%s", buffer);
     if(needs_crlf)
     {
