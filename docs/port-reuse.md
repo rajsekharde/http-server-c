@@ -6,7 +6,7 @@ When the server is running and Ctrl+C is entered, the server sends its final ACK
 
 The OS does this to:
 - Ensure the last ACK arrived from the client by keeping the connection alive for some time.
-- Avoid rogue / late packets from previous connection to get accepted by the new connection, which may lead to data corruption.
+- Avoid rogue / late packets from previous connections to get accepted by the new connection, which may lead to data corruption.
 
 ## Fix
 
