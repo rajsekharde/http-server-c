@@ -44,7 +44,6 @@ int validate_request(http_request *req)
 int parse(char* buffer)
 {
     char* method = buffer; // first char of method
-    if(!method) return -1;
 
     char* path = strchr(method, ' ');
     if (!path) return -1;
@@ -64,14 +63,19 @@ int parse(char* buffer)
     header_t headers[10];
     int header_count = 0;
 
-    while(header_count <= 10)
+    // loops until counter hits 11 or current line is "\r\n"
+    while(header_count < 10 && *header != '\0')
     {
-        if(strstr(header, "\r\n") == header) break;
+        if(header[0]=='\r' && header[1]=='\n')
+        {
+            header += 2;
+            break;
+        }
+        
         char* key = header;
-        // if (!key) return -1;
 
         char* value = strstr(key, ": ");
-        // if (!value) return -1;
+        if (!value) return -1;
         *value = '\0';
         value += 2;
 
@@ -80,17 +84,32 @@ int parse(char* buffer)
         *header = '\0';
         header += 2;
 
-        header_t h = {key, value};
+        header_t h = (header_t){key, value};
         headers[header_count] = h;
         header_count++;
     }
 
-    printf("Method: %s\nPath: %s\nVersion: %s\n\n", method, path, version);
-    printf("Headers:\n");
-    for(int i=0; i<header_count; i++)
+    char* body;
+    if(header_count == 10)
     {
-        printf("Key: %s, Value: %s\n", headers[i].key, headers[i].value);
+        body = strstr(header, "\r\n\r\n");
+        if(!body) return -1;
+        body += 4;
     }
+    else
+    {
+        if(!header) return -1;
+        body = header + 2;
+        if(!body) return -1;
+    }
+
+    // printf("Method: %s\nPath: %s\nVersion: %s\n\n", method, path, version);
+    // printf("Headers:\n");
+    // for(int i=0; i<header_count; i++)
+    // {
+    //     printf("Key: %s, Value: %s\n", headers[i].key, headers[i].value);
+    // }
+    // printf("\nBody:\n%s\n\n", body);
 
     return 0;
 }
