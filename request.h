@@ -1,16 +1,32 @@
 #ifndef REQUEST_H
 #define REQUEST_H
 
-const int MAX_METHOD = 8;
-const int MAX_PATH = 256;
-const int MAX_VERSION = 16;
-const int MAX_METHOD = 8;
+#define MAX_METHOD 8
+#define MAX_PATH 32
+#define MAX_VERSION 16
+#define MAX_HEADERS 10
+#define MAX_BODY 512
 
 typedef struct
 {
-    char method[8];
-    char path[256];
-    char version[16];
+    char *key;
+    char *value;
+} header_t;
+
+typedef struct
+{
+    // char method[MAX_METHOD];
+    // char path[MAX_PATH];
+    // char version[MAX_VERSION];
+
+    char* method;
+    char* path;
+    char* version;
+
+    header_t* headers;
+    int header_count;
+
+    char* body;
 } http_request;
 
 int parse_http_request(char *buffer, http_request *req);

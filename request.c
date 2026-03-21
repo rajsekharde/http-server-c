@@ -7,12 +7,6 @@
 Functions for parsing and validating http requests
 */
 
-typedef struct
-{
-    char* key;
-    char* value;
-} header_t;
-
 int parse(char* buffer);
 
 // parse request stored in buffer and store method, path, version, headers, body in req
@@ -97,7 +91,19 @@ int parse_http_request(char *buffer, http_request* req)
     // }
     // printf("\nBody:\n%s\n\n", body);
 
-    // req->method = method;
+
+    // for fixed length struct fields
+    // strncpy(req->method, method, MAX_METHOD);
+    // strncpy(req->path, path, MAX_PATH);
+    // strncpy(req->version, version, MAX_VERSION);
+
+    // for un-allocated struct fields
+    req->method = method;
+    req->path = path;
+    req->version = version;
+    req->headers = headers;
+    req->header_count = header_count;
+    req->body = body;
 
     return 1;
 }
