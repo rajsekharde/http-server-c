@@ -228,7 +228,9 @@ void* handle_client(void* args)
     double elapsed = (end.tv_sec - start.tv_sec) + (end.tv_usec - start.tv_usec) / 1e6;
 
     // logging
+    pthread_mutex_lock(&lock);
     log_request(req, buff_len, elapsed, resp_c, resp_m);
+    pthread_mutex_unlock(&lock);
 
     //de-allocate request struct memory
     free(req);

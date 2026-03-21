@@ -54,6 +54,7 @@ void log_request(http_request* req, int buff_len, double elapsed, int resp_c, ch
     printf("%s", GREY);
     printf("%s %s %s\n", req->method, req->path, req->version); // request line
     printf("Headers: %d\n", req->header_count);
+    printf("Body length: %d\n", (int)strlen(req->body));
     printf("Request length: %d\n\n", buff_len);
     printf("%s", CLEAR);
 
