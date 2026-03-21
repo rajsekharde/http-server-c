@@ -1,8 +1,3 @@
-Add mutex lock to request logging
-
-Proper HTTP request parsing
-- parse headers, body
-
 File serving
 - Serve any type of file: css, js, image files
 - Stream large files efficiently

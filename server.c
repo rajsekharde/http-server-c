@@ -126,7 +126,7 @@ int main()
         pthread_detach(thread);
     }
 
-    printf("\n%s   Waiting for active connections to finish...\n", INFO);
+    printf("\n%s   Waiting for active connections to finish\n", INFO);
     usleep(300000); // sleep 0.3 s
 
     while(metrics.active_connections > 0)

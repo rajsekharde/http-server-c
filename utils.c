@@ -50,9 +50,11 @@ void log_request(http_request* req, int buff_len, double elapsed, int resp_c, ch
     }
 
     log_timestamp();
+
+    printf("%s %s %s   ", req->method, req->path, req->version); // request line
     printf("%s%d   %s%s   %f s\n", code_col, resp_c, resp_m, CLEAR, elapsed);
+
     printf("%s", GREY);
-    printf("%s %s %s\n", req->method, req->path, req->version); // request line
     printf("Headers: %d\n", req->header_count);
     printf("Body length: %d\n", (int)strlen(req->body));
     printf("Request length: %d\n\n", buff_len);
