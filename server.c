@@ -16,7 +16,9 @@
 // listening socket fd
 int server_fd;
 
-int PORT = 8080; // server port
+#define PORT 8080 // server port
+#define REQ_BUFFER_SIZE 2048 // size of request buffer
+#define MAX_CONN_QUEUE 10 // connection queue length
 
 typedef struct
 {
@@ -78,7 +80,7 @@ int main()
     printf("%s   Socket bound to port %d\n", INFO, PORT);
 
     // set up socket for listening to connections & max pending conn queue length to 10
-    if(listen(server_fd, 10) < 0)
+    if(listen(server_fd, MAX_CONN_QUEUE) < 0)
     {
         perror("Listen Failed");
         exit(EXIT_FAILURE);
@@ -167,8 +169,8 @@ void* handle_client(void* args)
     pthread_mutex_unlock(&lock);
 
     // store request in buffer
-    char buffer[1024] = {0};
-    read(client_fd, buffer, 1024);
+    char buffer[REQ_BUFFER_SIZE] = {0};
+    read(client_fd, buffer, REQ_BUFFER_SIZE);
     int buff_len = strlen(buffer);
 
     // allocate heap memory for request struct
