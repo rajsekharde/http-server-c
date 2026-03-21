@@ -32,16 +32,16 @@ void log_timestamp()
 }
 
 // print request logs
-void log_request(char* buffer, double elapsed, int resp_c, char* resp_m)
+void log_request(http_request* req, int buff_len, double elapsed, int resp_c, char* resp_m)
 {
-    size_t len = strlen(buffer);
+    // size_t len = strlen(buffer);
 
-    // check if buffer ends with "\r\n\r\n"
-    int needs_crlf = 0;
-    if (len < 4 || strcmp(&buffer[len - 4], "\r\n\r\n") != 0)
-    {
-        needs_crlf = 1;
-    }
+    // // check if buffer ends with "\r\n\r\n"
+    // int needs_crlf = 0;
+    // if (len < 4 || strcmp(&buffer[len - 4], "\r\n\r\n") != 0)
+    // {
+    //     needs_crlf = 1;
+    // }
 
     char* code_col = GREEN;
     if(resp_c != 200)
@@ -51,9 +51,16 @@ void log_request(char* buffer, double elapsed, int resp_c, char* resp_m)
 
     log_timestamp();
     printf("%s%d   %s%s   %f s\n", code_col, resp_c, resp_m, CLEAR, elapsed);
-    printf("%s%s%s", GREY, buffer, CLEAR);
-    if (needs_crlf)
-    {
-        printf("\r\n\r\n");
-    }
+    printf("%s", GREY);
+    printf("%s %s %s\n", req->method, req->path, req->version); // request line
+    printf("Headers: %d\n", req->header_count);
+    printf("Request length: %d\n\n", buff_len);
+    printf("%s", CLEAR);
+
+    // printing buffer
+    // printf("%s%s%s", GREY, buffer, CLEAR);
+    // if (needs_crlf)
+    // {
+    //     printf("\r\n\r\n");
+    // }
 }

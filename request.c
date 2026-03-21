@@ -7,8 +7,6 @@
 Functions for parsing and validating http requests
 */
 
-int parse(char* buffer);
-
 // parse request stored in buffer and store method, path, version, headers, body in req
 int parse_http_request(char *buffer, http_request* req)
 {

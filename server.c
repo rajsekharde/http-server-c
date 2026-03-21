@@ -169,19 +169,21 @@ void* handle_client(void* args)
     // store request in buffer
     char buffer[1024] = {0};
     read(client_fd, buffer, 1024);
+    int buff_len = strlen(buffer);
 
-    http_request req;
+    // allocate heap memory for request struct
+    http_request* req = malloc(sizeof(http_request));
 
-    if (parse_http_request(buffer, &req) == 1) // parse http request and store in req
+    if (parse_http_request(buffer, req) == 1) // parse http request and store in req
     {
-        if (validate_request(&req) == 1) // validate request
+        if (validate_request(req) == 1) // validate request
         {
-            if (strcmp(req.path, "/") == 0)
+            if (strcmp(req->path, "/") == 0)
             {
                 // handle GET /
                 handle_get_index(client_fd);
             }
-            else if (strcmp(req.path, "/metrics") == 0)
+            else if (strcmp(req->path, "/metrics") == 0)
             {
                 // handle GET /metrics
                 handle_get_metrics(client_fd, metrics);
@@ -226,7 +228,10 @@ void* handle_client(void* args)
     double elapsed = (end.tv_sec - start.tv_sec) + (end.tv_usec - start.tv_usec) / 1e6;
 
     // logging
-    log_request(buffer, elapsed, resp_c, resp_m);
+    log_request(req, buff_len, elapsed, resp_c, resp_m);
+
+    //de-allocate request struct memory
+    free(req);
 
     return NULL;
 }
