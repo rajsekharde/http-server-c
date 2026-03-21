@@ -1,5 +1,5 @@
-# HTTP Server in C
-Building a fully functional HTTP server from scratch using C
+# HTTP Server
+Fully functional HTTP server built from scratch in C
 
 ## Features
 - HTTP request parsing
@@ -9,7 +9,7 @@ Building a fully functional HTTP server from scratch using C
 - Logging & Metrics
 
 ## Workflow
-- Using sys/socket.h library, create a TCP socket. socket() function returns the file descriptor to the socket.
+- Using sys/socket library, create a TCP socket. socket() function returns the file descriptor to the socket.
 - Create a sockaddr_in struct with IPv4 address family, accepting connections from "0.0.0.0" and set a port.
 - Bind the socket to the address struct.
 - Start listening on the socket.
@@ -22,7 +22,7 @@ Building a fully functional HTTP server from scratch using C
 
 - Run the steps from accept() to close() inside an infinite loop to keep accepting new connections.
 
-- Using pthread.h library, create a new thread for each client connection, pass data and detach it. Server can now handle concurrent connections.
+- Using pthread library, create a new thread for each client connection, pass data and detach it. Server can now handle concurrent connections.
 - Add mutex locks to avoid race conditions when accessing global variables.
 
 ## Project Structure
@@ -39,6 +39,8 @@ test.c -> Initial implementation of TCP echo server and minimal HTTP server
 
 ## Compiling & Running in a Linux machine
 ```bash
+clone git repository
+
 gcc server.c request.c handlers.c utils.c -o server -pthread
 ./server
 
