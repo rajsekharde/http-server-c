@@ -1,6 +1,11 @@
 #ifndef REQUEST_H
 #define REQUEST_H
 
+const int MAX_METHOD = 8;
+const int MAX_PATH = 256;
+const int MAX_VERSION = 16;
+const int MAX_METHOD = 8;
+
 typedef struct
 {
     char method[8];
