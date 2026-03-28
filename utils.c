@@ -51,6 +51,12 @@ void log_request(http_request* req, int buff_len, double elapsed, int resp_c, ch
 
     log_timestamp();
 
+    // checking if the request data is null
+    if(req->method == NULL) req->method = "UNKNOWN";
+    if(req->path == NULL) req->path = "UNKNOWN";
+    if(req->version == NULL) req->version == "UNKNOWN";
+    if(req->body == NULL) req->body = "";
+
     printf("%s %s %s   ", req->method, req->path, req->version); // request line
     printf("%s%d   %s%s   %f s\n", code_col, resp_c, resp_m, CLEAR, elapsed);
 
