@@ -16,8 +16,8 @@
 // listening socket fd
 int server_fd;
 
-#define PORT 8080 // server port
-#define REQ_BUFFER_SIZE 2048 // size of request buffer
+#define PORT 8080
+#define REQ_BUFFER_SIZE 2048
 #define MAX_CONN_QUEUE 10 // connection queue length
 
 typedef struct
@@ -234,7 +234,7 @@ void* handle_client(void* args)
     log_request(req, buff_len, elapsed, resp_c, resp_m);
     pthread_mutex_unlock(&lock);
 
-    //de-allocate request struct memory
+    //free request struct memory
     free(req);
 
     return NULL;

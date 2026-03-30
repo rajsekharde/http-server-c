@@ -35,7 +35,7 @@ int parse_http_request(char *buffer, http_request* req)
     header_t headers[10];
     int header_count = 0;
 
-    // loops until counter hits 11 or current line is "\r\n"
+    // loops until counter hits 10 or current line is "\r\n"
     while (header_count < 10 && *header != '\0')
     {
         if (header[0] == '\r' && header[1] == '\n')
