@@ -116,7 +116,7 @@ Threadpool *initialize_threadpool(int num_threads)
             return NULL;
         }
     }
-    printf("Thread pool initialised & %d threads created\n", num_threads);
+    // printf("Thread pool initialised & %d threads created\n", num_threads);
     return t_pool;
 }
 
@@ -151,7 +151,7 @@ void destroy_threadpool(Threadpool *t_pool)
     free(t_pool->pool);
     free(t_pool);
 
-    printf("Threadpool destroyed & memory freed\n");
+    // printf("Threadpool destroyed & memory freed\n");
 }
 
 // Add task to queue
@@ -169,5 +169,5 @@ void add_task(Threadpool *t_pool, void *(*task_function)(void *), void *arg)
 
     pthread_mutex_unlock(&t_pool->lock);
 
-    printf("Task added to queue\n");
+    // printf("Task added to queue\n");
 }

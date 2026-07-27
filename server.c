@@ -12,6 +12,7 @@
 #include "request.h"
 #include "handlers.h"
 #include "utils.h"
+#include "threadpool.h"
 
 // listening socket fd
 int server_fd;
@@ -47,6 +48,15 @@ int main()
 
     printf("%s   Process ID: %d\n", INFO, getpid());
 
+    // Initialize threadpool
+    Threadpool *t_pool = initialize_threadpool(10);
+    if (!t_pool)
+    {
+        printf("Failed to initialize threadpool\n");
+        return 1;
+    }
+    printf("%s   Threadpool initialised\n", INFO);
+
     // main listening socket
     server_fd = socket(AF_INET, SOCK_STREAM, 0);
     if(server_fd < 0)
@@ -54,7 +64,7 @@ int main()
         perror("Socket Failed");
         exit(EXIT_FAILURE);
     }
-    printf("%s   Socket Created: FD = %d\n", INFO, server_fd);
+    printf("%s   TCP Socket Created\n", INFO);
 
     // socket address structure specifically for IPv4
     struct sockaddr_in sock_addr;
@@ -122,10 +132,12 @@ int main()
         data->metrics = &metrics;
 
         // create a new thread for handling client
-        pthread_create(&thread, NULL, handle_client, data);
+        // pthread_create(&thread, NULL, handle_client, data);
         
         // detach the thread to run in background
-        pthread_detach(thread);
+        // pthread_detach(thread);
+
+        add_task(t_pool, handle_client, data);
     }
 
     printf("\n%s   Waiting for active connections to finish\n", INFO);
@@ -139,6 +151,10 @@ int main()
 
     // destroy mutex
     pthread_mutex_destroy(&lock);
+
+    // destroy threadpool
+    destroy_threadpool(t_pool);
+    printf("%s   Threadpool destroyed\n", INFO);
 
     printf("%s   Server shut down\n", INFO);
 

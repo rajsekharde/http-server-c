@@ -3,7 +3,7 @@
 # exit immediately if any command returns a non-zero exit code
 set -e
 
-gcc -g server.c utils.c request.c handlers.c -o server -pthread
+gcc -g server.c utils.c request.c handlers.c threadpool.c taskqueue.c -o server -pthread
 
 echo -e "\033[37m[$(date '+%F %T')] Compilation complete\033[0m"
 
