@@ -3,3 +3,6 @@ server
 
 testing.c
 testing
+
+perf.data
+perf.data.old
