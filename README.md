@@ -1,11 +1,11 @@
 # HTTP Server
-Fully functional HTTP server built from scratch in C
+Custom HTTP server built from scratch in C
 
 ## Features
 - HTTP request parsing
 - Routing
 - Static file serving
-- Concurrent connections
+- Concurrent connections using pthreads and a threadpool
 - Logging & Metrics
 
 ## Workflow
@@ -25,12 +25,16 @@ Fully functional HTTP server built from scratch in C
 - Using pthread library, create a new thread for each client connection, pass data and detach it. Server can now handle concurrent connections.
 - Add mutex locks to avoid race conditions when accessing global variables.
 
+- Create a threadpool to avoid thread-creation overhead
+
 ## Project Structure
 ```bash
 server.c -> Starts server, accepts connections and calls parsing, handler functions
 request.c -> Functions for parsing and validating HTTP requests
 handlers.c -> Handler functions for API endpoints
 utils.c -> Logging, misc functions
+threadpool.h -> Custom threadpool implementation
+taskqueue.h -> Task queue implementation for thread pool
 docs/ -> Notes
 static/ -> Static files
 *.h -> header files
@@ -41,7 +45,7 @@ test.c -> Initial implementation of TCP echo server and minimal HTTP server
 ```bash
 clone git repository
 
-gcc server.c request.c handlers.c utils.c -o server -pthread
+gcc server.c request.c handlers.c utils.c threadpool.c taskqueue.c -o server -pthread
 ./server
 
 OR using script:
